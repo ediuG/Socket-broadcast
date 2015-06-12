@@ -1,5 +1,3 @@
-/* A simple server in the internet domain using TCP
-   The port number is passed as an argument */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -115,11 +113,21 @@ int main(int argc, char *argv[])
                     text = recv(i,buffer,255,0);
                     printf("Here is the message: %s\n",buffer);
                 //bzero(buffer,256);
+
+
+
+
+                     text = send(i,"I got your message",18,0);
+                            if (text < 0){
+                            error("ERROR writing to socket");
+                            }
                     for (int x = 0; x < FD_SETSIZE; ++x)
                     {
-                        if ( FD_ISSET(x,&rfds)&&(x != sockfd))
+                        //printf("for\n");
+                        if (x != i && FD_ISSET(x,&master) && (x != sockfd))
                         {
-                            text = send(x,"I got your message",18,0);
+                            printf("send to monitor\n");
+                            text = send(x,buffer,18,0);
                             if (text < 0){
                             error("ERROR writing to socket");
                             //printf("send\n");
