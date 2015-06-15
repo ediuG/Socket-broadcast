@@ -1,5 +1,3 @@
-/* A simple server in the internet domain using TCP
-   The port number is passed as an argument */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +68,7 @@ int main(int argc, char *argv[])
 
     	//printf("ret1 = %d\n", ret);
     	rfds = master;
-    	ret = select(1030,&rfds,NULL,NULL,NULL);
+    	ret = select(FD_SETSIZE,&rfds,NULL,NULL,NULL);
     	printf("Events = %d\n", ret);
 
     	// for (int j = 0; j < FD_SETSIZE; ++j)
@@ -95,7 +93,7 @@ int main(int argc, char *argv[])
     				error("ERROR on accept");
     		FD_SET (newsockfd,&master);
     		// master = rfds;
-    		// printf("accept\n");
+    		printf("accept\n");
     	}
 
     		// break;
@@ -103,7 +101,7 @@ int main(int argc, char *argv[])
     	
     			//printf("wait for client\n");
 
-    	for (int i = 0; i < 1030; ++i)
+    	for (int i = 0; i < FD_SETSIZE; ++i)
     	{
     		if(FD_ISSET(i,&rfds)&&(i != sockfd)){
     			// printf("i = %d\n", i);
