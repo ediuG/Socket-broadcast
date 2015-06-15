@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
             		newsockfd = accept(sockfd, 
             			(struct sockaddr *) &cli_addr, 
             			&clilen);
+                    printf("Newsockfd = %d\n", newsockfd);
                  if (newsockfd < 0){
                     error("ERROR on accept");
                 }
