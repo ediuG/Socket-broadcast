@@ -1,3 +1,4 @@
+>  - session 
 >  - select client to send message from another client 
 >  - select between broadcast or direct message
 >  - every clients can send/recv any time (use parent-child process)
