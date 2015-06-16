@@ -12,7 +12,13 @@
 #include <sys/select.h>
 #include <time.h>
 
-#define MAX_LEN 1000
+#define MAX_LEN 256
+
+void error(const char *msg)
+{
+	perror(msg);
+	exit(1);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -26,7 +32,7 @@ int main(int argc, char const *argv[])
 	//char * temp_rptr;
 	int shmfd;
 
-	shmfd = shm_open("/myregion", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	shmfd = shm_open(argv[1], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (shmfd == -1){
 	    error("ERROR opening ");
 	    exit(1);
@@ -34,7 +40,7 @@ int main(int argc, char const *argv[])
 
 	ftruncate(shmfd, sizeof(struct region));
 
-	rptr = mmap(NULL, sizeof(struct region),PROT_READ | PROT_WRITE, 
+	rptr = (struct region *)mmap(NULL, sizeof(struct region),PROT_READ | PROT_WRITE, 
 				MAP_SHARED, shmfd, 0);
 	if (rptr == MAP_FAILED){
 	    error("ERROR mapping ");
@@ -48,8 +54,9 @@ int main(int argc, char const *argv[])
 	// int sockfd;
 	while(1){
         printf("Please enter the message: ");
-		bzero(rptr->buffer_write,1000);
-		fgets(rptr->buffer_write,999,stdin);
+		// bzero(rptr->buffer_write,256);
+		fgets(rptr->buffer_write,255,stdin);
+		printf("%s\n", rptr->buffer_write);
 
 		//write(sockfd,buffer,strlen(buffer));
 	}
