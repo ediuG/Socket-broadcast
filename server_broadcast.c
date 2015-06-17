@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
 
             			//printf("wait for client\n");
 
-            for (int i = 0; i < FD_SETSIZE; ++i){
+            for (int i = 0; i < FD_SETSIZE && ret > 0; ++i){
               if(FD_ISSET(i,&rfds)&&(i != sockfd)){
             			// printf("i = %d\n", i);
              // bzero(buffer,256);
-
+                ret--;
                  if (ret < 0){
                     error("ERROR reading from socket");
                 } else {
@@ -115,10 +115,7 @@ int main(int argc, char *argv[])
                     printf("Here is the message: %s\n",buffer);
                 //bzero(buffer,256);
 
-
-
-
-                     text = send(i,"I got your message",18,0);
+                     text = send(i,"I got your message\n",18,0);
                             if (text < 0){
                             error("ERROR writing to socket");
                             }
