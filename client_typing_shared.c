@@ -1,3 +1,5 @@
+/*Client for typing*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -13,7 +15,11 @@
 #include <time.h>
 
 #define MAX_LEN 256
-
+struct region {        /* Defines "structure" of shared memory */
+    char buffer_write[MAX_LEN];
+    int send;
+    int len;
+};
 void error(const char *msg)
 {
 	perror(msg);
@@ -22,14 +28,10 @@ void error(const char *msg)
 
 int main(int argc, char const *argv[])
 {
-	//share sockfd
-	    //_______________________shared memory_____________________
-    struct region {        /* Defines "structure" of shared memory */
-	    int len;
-	    char buffer_write[MAX_LEN];
-	};
+	//_______________________shared memory_____________________
+    
 	struct region *rptr;
-	//char * temp_rptr;
+	
 	int shmfd;
 
 	shmfd = shm_open(argv[1], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -48,16 +50,18 @@ int main(int argc, char const *argv[])
 	}
 	
 	/* Now we can refer to mapped region using fields of rptr;
-	   for example, rptr->len */
+	   for example, rptr->buffer_write */
 
     //_______________________shared memory_____________________
-	// int sockfd;
-	while(1){
-        printf("Please enter the message: ");
-		// bzero(rptr->buffer_write,256);
-		fgets(rptr->buffer_write,255,stdin);
-		printf("%s\n", rptr->buffer_write);
 
-		//write(sockfd,buffer,strlen(buffer));
+	rptr->send = 1;
+	while(1){
+		if(rptr->send == 1){
+			bzero(rptr->buffer_write,256);
+			printf("Please enter the message: ");
+			fgets(rptr->buffer_write,255,stdin);
+			rptr->len = strlen(rptr -> buffer_write) - 1;
+			rptr->send = 0;
+		}
 	}
 }
