@@ -18,6 +18,7 @@
 struct region {        /* Defines "structure" of shared memory */
 	char buffer_write[MAX_LEN];
 	int send;
+	int typed;
 	int len;
 };
 
@@ -36,7 +37,6 @@ int main(int argc, char *argv[])
 	struct hostent *server;
 	struct timeval tv;
 	char buffer_read[256];
-	char buffer[256];
 
     //_______________________shared memory_____________________
 
@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
     //_______________________shared memory_____________________
 
     /* Wait up to one microseconds. */
-	tv.tv_sec = 1;
-	tv.tv_usec = 1;
+	tv.tv_sec = 0;
+	tv.tv_usec = 100;
 
 	if (argc < 4) {
 		fprintf(stderr,"usage %s hostname port client_name\n", argv[0]);
@@ -99,15 +99,21 @@ int main(int argc, char *argv[])
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 		error("ERROR connecting");
 
+
+	rptr->typed = 0;
 	rptr->send = 1;
 	while(1){
-		if(rptr->buffer_write[0] != 0 && rptr->buffer_write[rptr->len] == '\n'){
-			send(sockfd,rptr->buffer_write,strlen(rptr->buffer_write),0);
-			rptr->send = 1;
+		if(rptr->typed == 1){
+			if(rptr->buffer_write[0] != 0 && rptr->buffer_write[rptr->len] == '\n'){
+				send(sockfd,rptr->buffer_write,strlen(rptr->buffer_write)-1,0);
+				rptr->typed = 0;
+				rptr->send = 1;
+			}
 		}
 
         rfds = master;
 		n = select(FD_SETSIZE,&rfds,NULL,NULL,&tv);
+
 		if (n > 0){
 			bzero(buffer_read,256);
 			recv(sockfd,buffer_read,255,0);
@@ -115,7 +121,7 @@ int main(int argc, char *argv[])
 		}	
 		else if (n < 0) 
 			error("ERROR reading from socket");
-
+		usleep(10);
 	}
 	close(sockfd);
 	return 0;

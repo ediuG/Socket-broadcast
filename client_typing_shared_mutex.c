@@ -18,6 +18,7 @@
 struct region {        /* Defines "structure" of shared memory */
     char buffer_write[MAX_LEN];
     int send;
+    int typed;
     int len;
 };
 void error(const char *msg)
@@ -54,6 +55,7 @@ int main(int argc, char const *argv[])
 
     //_______________________shared memory_____________________
 
+	rptr->typed = 0;
 	rptr->send = 1;
 	while(1){
 		if(rptr->send == 1){
@@ -62,6 +64,8 @@ int main(int argc, char const *argv[])
 			fgets(rptr->buffer_write,255,stdin);
 			rptr->len = strlen(rptr -> buffer_write) - 1;
 			rptr->send = 0;
+			rptr->typed = 1;
 		}
 	}
+	usleep(10);
 }
