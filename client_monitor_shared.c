@@ -1,3 +1,5 @@
+/*Client monitor for event typing and reading*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -14,8 +16,9 @@
 
 #define MAX_LEN 256
 struct region {        /* Defines "structure" of shared memory */
-int len;
-char buffer_write[MAX_LEN];
+	char buffer_write[MAX_LEN];
+	int send;
+	int len;
 };
 
 void error(const char *msg)
@@ -33,11 +36,11 @@ int main(int argc, char *argv[])
 	struct hostent *server;
 	struct timeval tv;
 	char buffer_read[256];
+	char buffer[256];
 
     //_______________________shared memory_____________________
 
 	struct region *rptr;
-	//char * temp_rptr;
 	int shmfd;
 
 	shmfd = shm_open(argv[3], O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -49,23 +52,23 @@ int main(int argc, char *argv[])
 	ftruncate(shmfd, sizeof(struct region));
 
 	rptr = (struct region *)mmap(NULL, sizeof(struct region),PROT_READ | PROT_WRITE, 
-		MAP_SHARED, shmfd, 0);
+				MAP_SHARED, shmfd, 0);
 	if (rptr == MAP_FAILED){
 		error("ERROR mapping ");
 		exit(1);
 	}
 	
 	/* Now we can refer to mapped region using fields of rptr;
-	   for example, rptr->len */
+	   for example, rptr->buffer_write */
 
     //_______________________shared memory_____________________
 
     /* Wait up to one microseconds. */
 	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	tv.tv_usec = 1;
 
-	if (argc < 3) {
-		fprintf(stderr,"usage %s hostname port\n", argv[0]);
+	if (argc < 4) {
+		fprintf(stderr,"usage %s hostname port client_name\n", argv[0]);
 		exit(0);
 	}
 
@@ -96,26 +99,23 @@ int main(int argc, char *argv[])
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 		error("ERROR connecting");
 
+	rptr->send = 1;
 	while(1){
-		// printf("buffer_write : %s\n",rptr->buffer_write );
-		if(rptr->buffer_write[0] != 0){
-			//printf("if buffer!!\n");
-			write(sockfd,rptr->buffer_write,strlen(rptr->buffer_write));
-			bzero(rptr->buffer_write,256);
+		if(rptr->buffer_write[0] != 0 && rptr->buffer_write[rptr->len] == '\n'){
+			send(sockfd,rptr->buffer_write,strlen(rptr->buffer_write),0);
+			rptr->send = 1;
 		}
-		// printf("end write \n");
+
         rfds = master;
 		n = select(FD_SETSIZE,&rfds,NULL,NULL,&tv);
-		// printf("event = %d\n",n );
 		if (n > 0){
-			printf("selected\n");
 			bzero(buffer_read,256);
-			read(sockfd,buffer_read,255);
+			recv(sockfd,buffer_read,255,0);
 			printf("%s\n",buffer_read);
-			}	
-		if (n < 0) 
+		}	
+		else if (n < 0) 
 			error("ERROR reading from socket");
-		
+
 	}
 	close(sockfd);
 	return 0;
