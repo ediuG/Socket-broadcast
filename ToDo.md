@@ -17,3 +17,6 @@
 - #### shared memory
   - http://www.kohala.com/start/unpv22e/unpv22e.chap12.pdf
   - http://pubs.opengroup.org/onlinepubs/009695399/functions/shm_open.html
+
+- #### Mutex & Semaphore
+  - http://koti.mbnet.fi/niclasw/MutexSemaphore.html
