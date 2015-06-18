@@ -46,75 +46,52 @@ int main(int argc, char *argv[])
 		error("ERROR on binding");
 	listen(sockfd,5);
 
-	printf("listen\n");
-     //////
-/*  Do read = master (backup)
-    Use ret
-    FD_SET
-    FD_CLR when not in use
-    */ 
         while(1){
-            	if(count % 1000 == 0){
-            		printf("======================= %d =======================\n", count);
+            	if(count % 1000 == 0) printf("======================= %d =======================\n", count);
 
-            	//printf("ret1 = %d\n", ret);
             	rfds = master;
             	ret = select(FD_SETSIZE,&rfds,NULL,NULL,NULL);
             	printf("Events = %d\n", ret);
-
-            	// printf("for\n");
+		
+		/* check new connection */
             	if (FD_ISSET(sockfd,&rfds)){
-                    /* check new connection */
-            		clilen = sizeof(cli_addr);
-            		// printf("before accept\n");
-            		newsockfd = accept(sockfd, 
-            			(struct sockaddr *) &cli_addr, 
-            			&clilen);
-                    printf("Newsockfd = %d\n", newsockfd);
-                 if (newsockfd < 0){
-                    error("ERROR on accept");
-                }
-                FD_SET (newsockfd,&master);
-            		// printf("accept\n");
-            }
-
-            for (int i = 0; i < FD_SETSIZE && ret > 0; ++i){
-              if(FD_ISSET(i,&rfds)&&(i != sockfd)){
-            			// printf("i = %d\n", i);
-             // bzero(buffer,256);
-                ret--;
-                 if (ret < 0){
-                    error("ERROR reading from socket");
-                } else {
-                    bzero(buffer,256);
-                    text = recv(i,buffer,255,0);
-                    printf("Here is the message: %s\n",buffer);
-                //bzero(buffer,256);
-
-                     text = send(i,"I got your message\n",18,0);
-                            if (text < 0){
-                            error("ERROR writing to socket");
-                            }
-                    for (int x = 0; x < FD_SETSIZE; ++x)
-                    {
-                        //printf("for\n");
-                        if (x != i && FD_ISSET(x,&master) && (x != sockfd))
-                        {
-                            printf("send to monitor\n");
-                            text = send(x,buffer,18,0);
-                            if (text < 0){
-                            error("ERROR writing to socket");
-                            //printf("send\n");
-                         }
-                        }
-                        
-                    }
-                    
-                }
-            }
-        }
-    count++;
-    }
+			clilen = sizeof(cli_addr);
+			newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+                    	printf("Newsockfd = %d\n", newsockfd);
+                 	if (newsockfd < 0){
+                    		error("ERROR on accept");
+			}
+			FD_SET (newsockfd,&master);
+            	}
+            	
+		/*check message in socket buffer*/
+            	for (int i = 0; i < FD_SETSIZE && ret > 0; ++i){
+			if(FD_ISSET(i,&rfds)&&(i != sockfd)){
+				ret--;
+				if (ret < 0){
+				    	error("ERROR reading from socket");
+				} else {
+					bzero(buffer,256);
+					text = recv(i,buffer,255,0);
+					printf("Here is the message: %s\n",buffer);
+					text = send(i,"I got your message\n",18,0);
+					if (text < 0){
+					    	error("ERROR writing to socket");
+					}
+					for (int x = 0; x < FD_SETSIZE; ++x){
+						if (x != i && FD_ISSET(x,&master) && (x != sockfd)){
+							printf("send to monitor\n");
+							text = send(x,buffer,18,0);
+							if (text < 0){
+								error("ERROR writing to socket");
+							}
+						}
+					}
+				}
+	            	}
+        	}
+    		count++;
+    	}
 
 close(newsockfd);
 close(sockfd);
