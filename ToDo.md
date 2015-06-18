@@ -20,3 +20,6 @@
 
 - #### Mutex & Semaphore
   - http://koti.mbnet.fi/niclasw/MutexSemaphore.html
+
+- #### Presentation
+  - https://drive.google.com/folderview?id=0B_IpWj1HGVsDfl82YmtXQnlPdXRQb1NjTHRmWDMyUlg2ZWRILTB6d3M2X243NDZHU3RiMmM&usp=sharing
