@@ -28,6 +28,24 @@ void error(const char *msg)
 	exit(1);
 }
 
+char* substring(int start,int end,char data[])
+{
+    int i;
+    char *new_data,*current;
+    new_data = malloc((end-start+2) * sizeof(char));
+    current = new_data;
+
+    for(i=start-1;i<end;i++)
+    {
+      *current = data[i];
+      current++;
+    }
+    *current = '\0';
+    
+    return new_data;
+}
+
+
 int main(int argc, char *argv[])
 {
 	fd_set rfds;
@@ -37,6 +55,13 @@ int main(int argc, char *argv[])
 	struct hostent *server;
 	struct timeval tv;
 	char buffer_read[256];
+	char ack[5];
+	char msg[256];
+	char *msg_p;
+
+    /* Wait up to one microseconds. */
+	tv.tv_sec = 0;
+	tv.tv_usec = 100;
 
     //_______________________shared memory_____________________
 
@@ -63,9 +88,6 @@ int main(int argc, char *argv[])
 
     //_______________________shared memory_____________________
 
-    /* Wait up to one microseconds. */
-	tv.tv_sec = 0;
-	tv.tv_usec = 100;
 
 	if (argc < 4) {
 		fprintf(stderr,"usage %s hostname port client_name\n", argv[0]);
@@ -102,6 +124,7 @@ int main(int argc, char *argv[])
 
 	rptr->typed = 0;
 	rptr->send = 1;
+	strcpy(ack,"!! ");
 	while(1){
 		if(rptr->typed == 1){
 			if(rptr->buffer_write[0] != 0 && rptr->buffer_write[rptr->len] == '\n'){
@@ -117,7 +140,25 @@ int main(int argc, char *argv[])
 		if (n > 0){
 			bzero(buffer_read,256);
 			recv(sockfd,buffer_read,255,0);
-			printf("%s\n",buffer_read);
+
+			/*ACK recive*/
+			if (strncmp(buffer_read,"!!",2) == 0){
+				printf("client \"%c\" got your message\n",buffer_read[3]);
+			}
+			/*direct msg recive*/
+			else if(strncmp(buffer_read,"/",1) == 0){
+				msg_p = substring(5,strlen(buffer_read),buffer_read);
+				strcpy(msg,msg_p);
+				printf("%s\n",msg);
+				bzero(msg,256);
+				strcat(ack,substring(2,3,buffer_read));
+				send(sockfd,ack,strlen(ack),0);
+				strcpy(ack,"!! ");
+			}
+			/*broadcast msg recive*/
+			else{
+				printf("%s\n", buffer_read);
+			}
 		}	
 		else if (n < 0) 
 			error("ERROR reading from socket");
