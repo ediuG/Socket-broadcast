@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
 	listen(sockfd,5);
 
     while(1){
-        	if(count % 1000 == 0) printf("======================= %d =======================\n", count);
-
         	rfds = master;
         	ret = select(FD_SETSIZE,&rfds,NULL,NULL,NULL);
         	printf("Events = %d\n", ret);
@@ -69,7 +67,7 @@ int main(int argc, char *argv[])
         	if (FD_ISSET(sockfd,&rfds)){
 				clilen = sizeof(cli_addr);
 				newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-                	printf("Newsockfd = %d\n", newsockfd);
+                printf("Newsockfd = %d\n", newsockfd);
              	if (newsockfd < 0){
                 	error("ERROR on accept");
 				}
@@ -101,7 +99,9 @@ int main(int argc, char *argv[])
 					/*direct msg recive*/
 					else if (strncmp(buffer,"/",1) == 0)
 					{
-						send(soc[find_index(name ,26 ,buffer[1])],buffer,256,0);
+						send(soc[find_index(name ,26 ,buffer[1])],buffer,255,0);
+						printf("send direct to : %c\n", buffer[1]);
+						printf("message = %s\n", buffer);
 					}
 					else if (strncmp(buffer,"->",2) ==0)
 					{	
