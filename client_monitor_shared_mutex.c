@@ -57,11 +57,13 @@ int main(int argc, char *argv[])
 	char buffer_read[256];
 	char ack[5];
 	char msg[256];
+	char d_msg[256];
 	char *msg_p;
+	char username[3];
 
     /* Wait up to one microseconds. */
 	tv.tv_sec = 0;
-	tv.tv_usec = 100;
+	tv.tv_usec = 10;
 
     //_______________________shared memory_____________________
 
@@ -121,6 +123,10 @@ int main(int argc, char *argv[])
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 		error("ERROR connecting");
 
+	/*Send username to server*/
+	strcpy(username,"->");
+	strcat(username,argv[3]);
+	send(sockfd,username,3,0);
 
 	rptr->typed = 0;
 	rptr->send = 1;
@@ -128,9 +134,21 @@ int main(int argc, char *argv[])
 	while(1){
 		if(rptr->typed == 1){
 			if(rptr->buffer_write[0] != 0 && rptr->buffer_write[rptr->len] == '\n'){
-				send(sockfd,rptr->buffer_write,strlen(rptr->buffer_write)-1,0);
-				rptr->typed = 0;
-				rptr->send = 1;
+				if (rptr->buffer_write[0] == '/')
+				{	
+					bzero(d_msg,256);
+					sprintf(d_msg,"%s%s%s",substring(1,2,rptr->buffer_write),
+							argv[3],substring(3,strlen(rptr->buffer_write),
+							rptr->buffer_write));
+					send(sockfd,d_msg,strlen(d_msg) - 1,0);
+					rptr->typed = 0;
+					rptr->send = 1;
+				}
+				else{
+					send(sockfd,rptr->buffer_write,strlen(rptr->buffer_write)-1,0);
+					rptr->typed = 0;
+					rptr->send = 1;
+				}
 			}
 		}
 
@@ -141,6 +159,7 @@ int main(int argc, char *argv[])
 			bzero(buffer_read,256);
 			recv(sockfd,buffer_read,255,0);
 
+
 			/*ACK recive*/
 			if (strncmp(buffer_read,"!!",2) == 0){
 				printf("client \"%c\" got your message\n",buffer_read[3]);
@@ -149,6 +168,7 @@ int main(int argc, char *argv[])
 			else if(strncmp(buffer_read,"/",1) == 0){
 				msg_p = substring(5,strlen(buffer_read),buffer_read);
 				strcpy(msg,msg_p);
+				printf("%c : ", buffer_read[2]);
 				printf("%s\n",msg);
 				bzero(msg,256);
 				strcat(ack,substring(2,3,buffer_read));
@@ -167,3 +187,8 @@ int main(int argc, char *argv[])
 	close(sockfd);
 	return 0;
 }
+/*___________TODO____________
+- delete shared memory object
+- server always online
+- client name and number
+  ___________________________*/
