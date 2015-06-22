@@ -28,11 +28,12 @@ int main(int argc, char *argv[])
 	int soc[26];
 	int soc_count = 0;
 	char name[26];
+	int name_count = 0;
 
-	for (int z = 0; z < 26; ++z)
+	/*for (int z = 0; z < 26; ++z)
 	{
 		name[z] = 'a' + z;
-	}
+	}*/
 
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no port provided\n");
@@ -94,13 +95,20 @@ int main(int argc, char *argv[])
 					/*ACK msg recive*/
 					if (strncmp(buffer,"!!",2) == 0)
 					{
-						send(soc[find_index(name ,26 ,buffer[3])],buffer,5,0);
-						
+						send(soc[find_index(name ,26 ,buffer[4])],buffer,5,0);
+						printf("send ack to : %c\n", buffer[4]);
 					}
 					/*direct msg recive*/
 					else if (strncmp(buffer,"/",1) == 0)
 					{
 						send(soc[find_index(name ,26 ,buffer[1])],buffer,256,0);
+					}
+					else if (strncmp(buffer,"->",2) ==0)
+					{	
+						printf("add user : %s\n",buffer );
+						name[name_count] = buffer[2];
+						name_count++;
+						printf("user number%d\n", name_count);
 					}
 					/*broadcast msg recive*/
 					else{
