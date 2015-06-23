@@ -30,11 +30,6 @@ int main(int argc, char *argv[])
 	char name[26];
 	int name_count = 0;
 
-	/*for (int z = 0; z < 26; ++z)
-	{
-		name[z] = 'a' + z;
-	}*/
-
 	if (argc < 2) {
 		fprintf(stderr,"ERROR, no port provided\n");
 		exit(1);
@@ -58,67 +53,75 @@ int main(int argc, char *argv[])
 		error("ERROR on binding");
 	listen(sockfd,5);
 
-    while(1){
-        	rfds = master;
-        	ret = select(FD_SETSIZE,&rfds,NULL,NULL,NULL);
-        	printf("Events = %d\n", ret);
-	
-			/* check new connection */
-        	if (FD_ISSET(sockfd,&rfds)){
-				clilen = sizeof(cli_addr);
-				newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-                printf("Newsockfd = %d\n", newsockfd);
-             	if (newsockfd < 0){
-                	error("ERROR on accept");
-				}
-				soc[soc_count] = newsockfd;
-             	if (soc_count > 26){
-                	error("ERROR maximum cilent");
-				}	
-				soc_count++;
-				FD_SET (newsockfd,&master);
-        	}
-        	
-			/*check message in socket buffer*/
-        	for (int i = 0; i < FD_SETSIZE && ret > 0; ++i){
-				if(FD_ISSET(i,&rfds)&&(i != sockfd)){
+	while(1){
+		rfds = master;
+		ret = select(FD_SETSIZE,&rfds,NULL,NULL,NULL);
+		printf("Events = %d\n", ret);
+
+	/* check new connection */
+		if (FD_ISSET(sockfd,&rfds)){
+			clilen = sizeof(cli_addr);
+			newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+			printf("Newsockfd = %d\n", newsockfd);
+			if (newsockfd < 0){
+				error("ERROR on accept");
+			}
+			soc[soc_count] = newsockfd;
+			if (soc_count > 26){
+				error("ERROR maximum cilent");
+			}	
+			soc_count++;
+			FD_SET (newsockfd,&master);
+		}
+
+	/*check message in socket buffer*/
+		for (int i = 0; i < FD_SETSIZE && ret > 0; ++i){
+			if(FD_ISSET(i,&rfds)&&(i != sockfd)){
 				ret--;
 				if (ret < 0){
-			    	error("ERROR reading from socket");
+					error("ERROR reading from socket");
 				} else {
 					bzero(buffer,256);
 					text = recv(i,buffer,255,0);
 					printf("Here is the message: %s\n",buffer);
-					
-					/*ACK msg recive*/
+
+	/*ACK msg recive*/
 					if (strncmp(buffer,"!!",2) == 0)
 					{
 						send(soc[find_index(name ,26 ,buffer[4])],buffer,5,0);
 						printf("send ack to : %c\n", buffer[4]);
 					}
-					/*direct msg recive*/
+	/*direct msg recive*/
 					else if (strncmp(buffer,"/",1) == 0)
 					{
-						send(soc[find_index(name ,26 ,buffer[1])],buffer,255,0);
-						printf("send direct to : %c\n", buffer[1]);
-						printf("message = %s\n", buffer);
+						if (strncmp(buffer,"/exit",5) == 0)
+						{
+							FD_CLR (i,&master);
+							bzero(buffer,256);
+						}
+						else 
+						{
+							send(soc[find_index(name ,26 ,buffer[1])],buffer,255,0);
+							printf("send direct to : %c\n", buffer[1]);
+							printf("message = %s\n", buffer);
+						}
 					}
 					else if (strncmp(buffer,"->",2) ==0)
 					{	
-						printf("add user : %s\n",buffer );
+						printf("add user : %c\n", buffer[2]);
 						name[name_count] = buffer[2];
 						name_count++;
-						printf("user number%d\n", name_count);
+						printf("user number = %d\n", name_count);
 					}
-					/*broadcast msg recive*/
+	/*broadcast msg recive*/
 					else{
-						text = send(i,"I got your message\n",18,0);
+						text = send(i,"Server got your message\n",18,0);
 						if (text < 0){
-					    	error("ERROR writing to socket");
+							error("ERROR writing to socket");
 						}		
 						for (int x = 0; x < FD_SETSIZE; ++x){
 							if (x != i && FD_ISSET(x,&master) && (x != sockfd)){
-								printf("send to monitor\n");
+								printf("send broadcast message\n");
 								text = send(x,buffer,18,0);
 								if (text < 0){
 									error("ERROR writing to socket");
@@ -127,11 +130,10 @@ int main(int argc, char *argv[])
 						}
 					}	
 				}
-            }
-    	}
+			}
+		}
 		count++;
 	}
-
 	close(newsockfd);
 	close(sockfd);
 	return 0; 
@@ -139,13 +141,13 @@ int main(int argc, char *argv[])
 
 int find_index(char a[], int num_elements, char value)
 {
-   int i;
-   for (i=0; i<num_elements; i++)
-   {
-	 if (a[i] == value)
-	 {
-	    return(i);  /* it was found return index */
-	 }
-   }
-   return(-1);  /* if it was not found */
+	int i;
+	for (i=0; i<num_elements; i++)
+	{
+		if (a[i] == value)
+		{
+			return(i);  /* it was found return index */
+		}
+	}
+return(-1);  /* if it was not found */
 }
